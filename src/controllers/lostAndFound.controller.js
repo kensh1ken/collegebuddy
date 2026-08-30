@@ -1,6 +1,10 @@
 const lostAndFound = require("../models/lostAndFound.model");
 module.exports.createPost = async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     const {
       title,
       description,
@@ -9,26 +13,45 @@ module.exports.createPost = async (req, res) => {
       location,
       contactNumber,
     } = req.body;
+
+    const normalizedCategoryMap = {
+      electronics: "Electronics",
+      books: "Books",
+      "id card": "ID Card",
+      documents: "ID Card",
+      wallet: "Wallet",
+      keys: "Keys",
+      clothing: "Clothing",
+      accessories: "Accessories",
+      other: "Other",
+      others: "Others",
+    };
+
+    const normalizedTypeMap = {
+      lost: "Lost",
+      found: "Found",
+    };
+
+    const safeCategory = normalizedCategoryMap[String(category || "").trim().toLowerCase()] || category;
+    const safeType = normalizedTypeMap[String(type || "").trim().toLowerCase()] || type;
+
     const report = await lostAndFound.create({
       title,
       description,
-      category,
-      type,
+      category: safeCategory,
+      type: safeType,
       location,
-
-        imageUrl: req.file
-                ? `/uploads/lost-found/${req.file.filename}`
-                : "",
-                
+      imageUrl: req.file ? `/uploads/lost-found/${req.file.filename}` : "",
       contactNumber,
       postedBy: req.user._id,
     });
-     return  res.status(201).json({
+
+    return res.status(201).json({
       message: "Reported Successfully!",
       report,
     });
   } catch (err) {
-   return res.status(500).json({
+    return res.status(500).json({
       message: err.message,
     });
   }

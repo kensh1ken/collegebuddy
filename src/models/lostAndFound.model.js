@@ -25,6 +25,7 @@ const lostFoundSchema = new mongoose.Schema(
         "Keys",
         "Clothing",
         "Accessories",
+        "Other",
         "Others",
       ],
     },

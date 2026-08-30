@@ -1,4 +1,9 @@
-const API = "http://127.0.0.1:3000/api/auth";
+const API = (() => {
+  const host = window.location.hostname;
+  return host === "localhost"
+    ? "http://localhost:3000/api/auth"
+    : "http://127.0.0.1:3000/api/auth";
+})();
 
 const signupForm = document.getElementById("signupForm");
 if(signupForm) {

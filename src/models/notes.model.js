@@ -22,15 +22,15 @@ const notesSchema = new mongoose.Schema({
   fileUrl:{
     type:String,
     required: function() {
-      return this.resourceType == 'file;'
+      return this.resourceType === 'file';
     }
   },
   externalLink:{
     type:String,
-     required: function() {
-      return this.resourceType == 'link;'
+    required: function() {
+      return this.resourceType === 'link';
     }
-},
+  },
   uploadedBy:{
     type:mongoose.Schema.Types.ObjectId,
     ref:'User',
