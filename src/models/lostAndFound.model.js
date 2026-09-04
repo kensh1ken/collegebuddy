@@ -42,14 +42,24 @@ const lostFoundSchema = new mongoose.Schema(
       trim: true,
     },
 
+    incidentDate: {
+      type: Date,
+      default: Date.now,
+    },
+
     imageUrl: {
       type: String,
       default: "",
     },
 
+    imageStoragePath: {
+      type: String,
+      select: false,
+    },
+
     status: {
       type: String,
-      enum: ["Open", "Claimed"],
+      enum: ["Open", "Claimed", "Resolved"],
       default: "Open",
     },
 
@@ -67,5 +77,16 @@ const lostFoundSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+lostFoundSchema.index({ type: 1, status: 1, createdAt: -1 });
+lostFoundSchema.index({ title: 'text', description: 'text', location: 'text' });
+
+lostFoundSchema.set('toJSON', {
+  transform: (_document, returned) => {
+    delete returned.__v;
+    delete returned.imageStoragePath;
+    return returned;
+  },
+});
 
 module.exports = mongoose.model("LostFound", lostFoundSchema);

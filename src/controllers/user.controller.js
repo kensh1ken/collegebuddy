@@ -1,42 +1,18 @@
 const User = require('../models/auth.model');
-module.exports.user_profile = async (req,res) => {
-   try{
-    const {currentSem , branch , rollNumber , course} = req.body;
-    const user = await User.findByIdAndUpdate(req.user._id
-      ,{
-        currentSem,
-        branch,
-        rollNumber,
-        course,
-        profileCompleted:true
-      } , {new:true}
-    );
-    res.status(200).json({user , message:"Profile updated successfully"});
-   }catch(err) {
-    res.status(500).json({
-      message:err.message
-    })
-   }
-}
-module.exports.getCurrentUser = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id);
+const AppError = require('../utils/AppError');
+const { sendSuccess } = require('../utils/response');
+const { privateUser } = require('../utils/serializers');
 
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found"
-            });
-        }
-
-
-        return res.status(200).json({
-            user,
-            profileCompleted : user.profileCompleted,
-        });
-
-    } catch (err) {
-        return res.status(500).json({
-            message: err.message
-        });
-    }
+module.exports.user_profile = async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { ...req.body, profileCompleted: true },
+    { returnDocument: 'after', runValidators: true }
+  );
+  if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+  return sendSuccess(res, { message: 'Profile updated successfully', data: { user: privateUser(user) } });
 };
+
+module.exports.getCurrentUser = async (req, res) => sendSuccess(res, {
+  data: { user: privateUser(req.user), profileCompleted: req.user.profileCompleted },
+});

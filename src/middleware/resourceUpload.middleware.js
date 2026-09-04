@@ -1,28 +1,24 @@
-const multer = require("multer");
+const multer = require('multer');
+const { env } = require('../config/env');
 
-const storage = multer.memoryStorage();
+const allowedTypes = new Set([
+  'application/pdf',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
 
-const uploadResource = multer({
-    storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024
-    },
-    fileFilter: (req, file, cb) => {
-
-        const allowedTypes = [
-            "application/pdf",
-            "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ];
-
-        if (allowedTypes.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error("Only PDF, PPT, and DOC files are allowed"));
-        }
+module.exports = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: env.maxResourceFileBytes, files: 1 },
+  fileFilter: (_req, file, callback) => {
+    if (!allowedTypes.has(file.mimetype)) {
+      const error = new Error('Only PDF, PPT, PPTX, DOC, and DOCX files are allowed');
+      error.statusCode = 400;
+      error.code = 'INVALID_FILE_TYPE';
+      return callback(error);
     }
+    callback(null, true);
+  },
 });
-
-module.exports = uploadResource;

@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:3000";
+const API = window.CollegeBuddyAPI.baseUrl;
 
 const container =
     document.getElementById("resourcesContainer");

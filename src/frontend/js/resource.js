@@ -1,260 +1,43 @@
-const API = "http://127.0.0.1:3000";
+const api = window.CollegeBuddyAPI;
+const container = document.getElementById('resourceContainer');
+const resourceId = new URLSearchParams(window.location.search).get('id');
+const text = (value, fallback = '—') => value === undefined || value === null || value === '' ? fallback : String(value);
+const element = (tag, className, value) => { const node = document.createElement(tag); if (className) node.className = className; if (value !== undefined) node.textContent = text(value); return node; };
 
-const container =
-    document.getElementById("resourceContainer");
-
-
-// ============================
-// GET RESOURCE ID
-// ============================
-
-const params =
-    new URLSearchParams(window.location.search);
-
-const resourceId =
-    params.get("id");
-
-
-if (!resourceId) {
-
-    container.innerHTML = `
-        <div class="error">
-            Resource ID not found.
-        </div>
-    `;
-
-} else {
-
-    loadResource();
-
+function detail(label, value) {
+  const wrapper = element('div', 'detail');
+  wrapper.append(element('div', 'detail-label', label), element('div', 'detail-value', value));
+  return wrapper;
 }
-
-
-// ============================
-// LOAD RESOURCE
-// ============================
-
-async function loadResource() {
-
-    try {
-
-        const response = await fetch(
-            `${API}/resources/${resourceId}`,
-            {
-                credentials: "include"
-            }
-        );
-
-
-        const data =
-            await response.json();
-
-
-        console.log("Resource:", data);
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.message ||
-                "Failed to fetch resource"
-            );
-
-        }
-
-
-        displayResource(data.resource);
-
-
-    } catch (err) {
-
-        console.error(err);
-
-        container.innerHTML = `
-            <div class="error">
-                ${err.message}
-            </div>
-        `;
-
-    }
-
-}
-
-
-// ============================
-// DISPLAY RESOURCE
-// ============================
 
 function displayResource(resource) {
+  container.replaceChildren();
+  const isLink = resource.deliveryType === 'link' || ['link', 'external_link'].includes(resource.resourceType);
+  const header = element('div', 'resource-header');
+  const headerBody = element('div');
+  headerBody.append(element('div', 'resource-icon', isLink ? '🔗' : '📄'), element('h1', '', resource.title), element('span', `resource-type ${isLink ? 'link-type' : 'file-type'}`, text(resource.resourceType, 'resource').replaceAll('_', ' ')));
+  header.append(headerBody);
+  container.append(header, element('p', 'description', text(resource.description, 'No description provided.')));
+  const details = element('div', 'details');
+  details.append(detail('Course', resource.courseId), detail('Semester', `Semester ${text(resource.semester)}`), detail('Academic year', resource.academicYear), detail('Status', resource.status || 'approved'));
+  container.append(details);
+  const uploader = element('div', 'uploader');
+  uploader.append(element('strong', '', 'Uploaded by'), element('p', '', resource.uploadedBy?.name || 'Unknown'));
+  container.append(uploader);
+  const open = element('button', 'action-btn', isLink ? '🔗 Open resource' : '📄 Get secure download');
+  open.addEventListener('click', async () => {
+    open.disabled = true;
+    try { const { download } = await api.resources.download(resource._id); window.open(download.url, '_blank', 'noopener'); }
+    catch (error) { alert(error.message); }
+    finally { open.disabled = false; }
+  });
+  container.append(open);
+}
 
-    const isFile =
-        resource.resourceType === "file";
-
-
-    const icon =
-        isFile ? "📄" : "🔗";
-
-
-    const typeClass =
-        isFile
-            ? "file-type"
-            : "link-type";
-
-
-    const typeText =
-        isFile
-            ? "FILE"
-            : "EXTERNAL LINK";
-
-
-    container.innerHTML = `
-
-        <div class="resource-header">
-
-            <div>
-
-                <div class="resource-icon">
-                    ${icon}
-                </div>
-
-                <h1>
-                    ${resource.title}
-                </h1>
-
-                <span
-                    class="resource-type ${typeClass}"
-                >
-                    ${typeText}
-                </span>
-
-            </div>
-
-        </div>
-
-
-        <p class="description">
-
-            ${
-                resource.description ||
-                "No description provided."
-            }
-
-        </p>
-
-
-        <div class="details">
-
-            <div class="detail">
-
-                <div class="detail-label">
-                    Course
-                </div>
-
-                <div class="detail-value">
-                    ${resource.courseID}
-                </div>
-
-            </div>
-
-
-            <div class="detail">
-
-                <div class="detail-label">
-                    Semester
-                </div>
-
-                <div class="detail-value">
-                    Semester ${resource.semester}
-                </div>
-
-            </div>
-
-
-            <div class="detail">
-
-                <div class="detail-label">
-                    Resource Type
-                </div>
-
-                <div class="detail-value">
-                    ${resource.resourceType}
-                </div>
-
-            </div>
-
-
-            <div class="detail">
-
-                <div class="detail-label">
-                    Uploaded By
-                </div>
-
-                <div class="detail-value">
-
-                    ${
-                        resource.uploadedBy?.name ||
-                        "Unknown"
-                    }
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="uploader">
-
-            <strong>
-                Uploaded by
-            </strong>
-
-            <p>
-                ${
-                    resource.uploadedBy?.name ||
-                    "Unknown"
-                }
-
-                ${
-                    resource.uploadedBy?.email
-                        ? ` • ${resource.uploadedBy.email}`
-                        : ""
-                }
-            </p>
-
-        </div>
-
-
-        ${
-            isFile
-
-            ?
-
-            `
-            <a
-                href="${resource.fileUrl}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="action-btn"
-            >
-                📄 Open File
-            </a>
-            `
-
-            :
-
-            `
-            <a
-                href="${resource.externalLink}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="action-btn"
-            >
-                🔗 Open Resource
-            </a>
-            `
-
-        }
-
-    `;
+if (!resourceId) {
+  container.append(element('div', 'error', 'Resource ID not found.'));
+} else {
+  api.request(`/resources/${encodeURIComponent(resourceId)}`)
+    .then(({ resource }) => displayResource(resource))
+    .catch((error) => container.replaceChildren(element('div', 'error', error.message)));
 }

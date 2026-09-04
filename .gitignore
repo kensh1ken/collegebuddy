@@ -41,3 +41,6 @@ uploads/
 
 # Optional
 .cache/
+.npm-cache/
+.mongodb-binaries/
+.expo/

@@ -1,10 +1,11 @@
 import client from "./client";
 
 export const lostFoundApi = {
-  list: () => client.get("/lost-found").then((r) => r.data.reports),
-  myPosts: () => client.get("/lost-found/my-posts").then((r) => r.data.report),
-  getOne: (id) => client.get(`/lost-found/${id}`).then((r) => r.data.report),
-  update: (id, payload) => client.put(`/lost-found/${id}`, payload).then((r) => r.data),
+  list: (filters = {}) => client.get("/lost-found", { params: filters }).then((r) => r.data.data?.items || r.data.reports || []),
+  myPosts: () => client.get("/lost-found/my-posts").then((r) => r.data.data?.items || r.data.report || []),
+  getOne: (id) => client.get(`/lost-found/${id}`).then((r) => r.data.data?.report || r.data.report),
+  update: (id, payload) => client.patch(`/lost-found/${id}`, payload).then((r) => r.data),
+  remove: (id) => client.delete(`/lost-found/${id}`).then((r) => r.data),
 
   // payload: { title, description, category, type, location, contactNumber }
   // image: { uri, name, type } from expo-image-picker, or null

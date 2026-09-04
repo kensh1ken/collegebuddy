@@ -1,61 +1,69 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const multer = require('multer');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
+const path = require('path');
+const { env } = require('./config/env');
+const { notFound, errorHandler } = require('./middleware/error.middleware');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const lostAndFoundRoutes = require('./routes/lostAndFound.routes');
-const lostAndFound = require('./models/lostAndFound.model');
 const resourceRoute = require('./routes/notes.routes');
 const eventRoutes = require('./routes/event.routes');
 const adminRoutes = require('./routes/admin.routes');
+const courseRoutes = require('./routes/course.routes');
 const app = express();
 
-const allowedOrigins = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://127.0.0.1:5501",
-    "http://localhost:5501"
-];
-
-app.use(express.json());
-require('dotenv').config();
+if (env.trustProxy) app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+    req.id = req.get('x-request-id') || crypto.randomUUID();
+    res.setHeader('x-request-id', req.id);
+    next();
+});
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || env.allowedOrigins.includes(origin)) {
             callback(null, true);
             return;
         }
-
-        callback(new Error("Not allowed by CORS"));
+        const error = new Error("Origin is not allowed by CORS");
+        error.statusCode = 403;
+        error.code = "CORS_ORIGIN_DENIED";
+        callback(error);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
+app.use(express.json({ limit: env.jsonLimit }));
+app.use(express.urlencoded({ extended: false, limit: env.jsonLimit }));
 app.use(cookieParser());
+app.use(rateLimit({
+    windowMs: env.apiRateLimitWindowMs,
+    limit: env.apiRateLimitMax,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { success: false, error: { code: 'RATE_LIMITED', message: 'Too many requests' } }
+}));
+app.get('/health', (_req, res) => res.status(200).json({ success: true, data: { status: 'ok' } }));
 app.use('/admin' , adminRoutes)
+app.use('/courses', courseRoutes)
 app.use('/events', eventRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use('/api/auth' , authRoutes);
 app.use('/users' , userRoutes)
 app.use('/lost-found' , lostAndFoundRoutes)
 app.use('/resources' , resourceRoute)
+if (env.serveWebClient) {
+    app.use(express.static(path.join(__dirname, 'frontend'), { extensions: ['html'], maxAge: env.nodeEnv === 'production' ? '1h' : 0 }));
+}
 // app.use('/lost-found/:id' , lostAndFoundRoutes)
 
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        return res.status(400).json({ message: err.message });
-    }
-
-    if (err) {
-        return res.status(400).json({ message: err.message || 'Request failed' });
-    }
-
-    next();
-});
-
-// app.use(authRoutes);
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;

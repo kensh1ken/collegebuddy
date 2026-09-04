@@ -1,120 +1,50 @@
-const API = (() => {
-  const host = window.location.hostname;
-  return host === "localhost"
-    ? "http://localhost:3000/api/auth"
-    : "http://127.0.0.1:3000/api/auth";
-})();
+const api = window.CollegeBuddyAPI;
 
-const signupForm = document.getElementById("signupForm");
-if(signupForm) {
-  signupForm.addEventListener('submit' , async (e)=>{
-    e.preventDefault();
-    const name = document.getElementById("signupName").value;
-    const email = document.getElementById("signupEmail").value;
-    const password = document.getElementById("signupPassword").value;
-
-    try {
-      const response = await fetch(
-          `${API}/signup`,
-          {
-            method:"POST",
-            headers:{
-              "Content-Type": "application/json"
-            },
-            credentials: "include",
-            body:JSON.stringify({
-              name,
-              email,
-              password
-            })
-          }
-      )
-      const data = await response.json();
-
-      if(!response.ok) {
-        throw new Error(
-          data.message || "signup failed"
-        )
-      }
-      document.getElementById("message").textContent = "Account Created Successfully";
-
-      setTimeout(()=>{
-        window.location.href = "complete-profile.html";
-      },1000)
-    }catch(err) {
-      document.getElementById("message").textContent = err.message;
-    }
-  })
-
+function showMessage(message, isError = false) {
+  const element = document.getElementById('message');
+  if (!element) return;
+  element.textContent = message;
+  element.classList.toggle('error', isError);
 }
 
-const loginForm = document.getElementById("loginForm");
-
-if (loginForm) {
-
-    loginForm.addEventListener("submit", async (e) => {
-
-        e.preventDefault();
-
-
-        const email =
-            document.getElementById("loginEmail").value;
-
-        const password =
-            document.getElementById("loginPassword").value;
-
-
-        try {
-
-            const response = await fetch(
-                `${API}/login`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-
-                    credentials: "include",
-
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
-                }
-            );
-
-
-            const data = await response.json();
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data.message || "Login failed"
-                );
-
-            }
-
-
-            document.getElementById("message").textContent =
-                "Login successful!";
-
-            if(data.profileCompleted) {
-                window.location.href = "index.html";
-            } else {
-                window.location.href = "complete-profile.html";
-            }
-            
-
-
-        } catch (err) {
-
-            document.getElementById("message").textContent =
-                err.message;
-
-        }
-
-    });
-
+async function submit(form, action, successMessage) {
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  showMessage('');
+  try {
+    const result = await action();
+    showMessage(successMessage);
+    window.location.href = result.user?.profileCompleted || result.profileCompleted ? 'index.html' : 'complete-profile.html';
+  } catch (error) {
+    showMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+  }
 }
+
+document.getElementById('signupForm')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submit(event.currentTarget, () => api.auth.signup({
+    name: document.getElementById('signupName').value.trim(),
+    email: document.getElementById('signupEmail').value.trim(),
+    password: document.getElementById('signupPassword').value,
+  }), 'Account created. Opening your profile…');
+});
+
+document.getElementById('loginForm')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submit(event.currentTarget, () => api.auth.login({
+    email: document.getElementById('loginEmail').value.trim(),
+    password: document.getElementById('loginPassword').value,
+  }), 'Welcome back. Opening Campus OS…');
+});
+
+document.getElementById('profileForm')?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submit(event.currentTarget, () => api.auth.completeProfile({
+    rollNumber: document.getElementById('rollNumber').value.trim(),
+    course: document.getElementById('course').value.trim(),
+    branch: document.getElementById('branch').value.trim(),
+    currentSem: document.getElementById('currentSem').value,
+  }), 'Profile completed. Opening Campus OS…');
+});

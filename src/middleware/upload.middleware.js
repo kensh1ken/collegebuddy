@@ -1,30 +1,18 @@
-const multer = require("multer");
-const path = require("path");
+const multer = require('multer');
+const { env } = require('../config/env');
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/lost-found");
-    },
+const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-    filename: (req, file, cb) => {
-        const uniqueName =
-            Date.now() + "-" + Math.round(Math.random() * 1E9);
-
-        cb(null, uniqueName + path.extname(file.originalname));
+module.exports = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: env.maxImageFileBytes, files: 1 },
+  fileFilter: (_req, file, callback) => {
+    if (!allowed.has(file.mimetype)) {
+      const error = new Error('Only JPEG, PNG, and WebP images are allowed');
+      error.statusCode = 400;
+      error.code = 'INVALID_IMAGE_TYPE';
+      return callback(error);
     }
+    callback(null, true);
+  },
 });
-
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-        cb(null, true);
-    } else {
-        cb(new Error("Only image files are allowed"), false);
-    }
-};
-
-const upload = multer({
-    storage,
-    fileFilter
-});
-
-module.exports = upload;

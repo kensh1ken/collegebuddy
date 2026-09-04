@@ -1,268 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>CollegeBuddy</title>
-
-    <link rel="stylesheet" href="./css/home.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <title>CollegeBuddy Campus OS</title>
+  <link rel="stylesheet" href="./css/campus-os.css">
 </head>
-
 <body>
+  <div class="os-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="#home" aria-label="CollegeBuddy home">
+        <span class="brand-mark">CB</span>
+        <span><strong>CollegeBuddy</strong><small>Campus OS</small></span>
+      </a>
+      <nav id="appNav" class="app-nav">
+        <button class="nav-item active" data-view="home"><span>⌂</span>Home</button>
+        <button class="nav-item" data-view="courses"><span>▦</span>Courses</button>
+        <button class="nav-item" data-view="resources"><span>◇</span>Resources</button>
+        <button class="nav-item" data-view="events"><span>◷</span>Events</button>
+        <button class="nav-item" data-view="lost-found"><span>⌕</span>Lost &amp; Found</button>
+        <button class="nav-item" data-view="profile"><span>◎</span>Profile</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span>Settings</button>
+        <button id="adminNav" class="nav-item hidden" data-view="admin"><span>✦</span>Admin</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="online-dot"><span></span>Campus services</div>
+        <button id="logoutBtn" class="quiet-button">Sign out</button>
+      </div>
+    </aside>
 
-    <!-- NAVBAR -->
+    <main class="workspace">
+      <header class="topbar">
+        <button id="menuButton" class="menu-button" aria-label="Open navigation">☰</button>
+        <div><p class="eyebrow" id="viewEyebrow">Campus overview</p><h1 id="viewTitle">Home</h1></div>
+        <div class="top-actions"><span id="clock" class="clock"></span><button id="profileButton" class="avatar" aria-label="Open profile">ST</button></div>
+      </header>
 
-    <nav class="navbar">
+      <div id="globalNotice" class="notice hidden" role="status"></div>
 
-        <div class="logo">
-            College<span>Buddy</span>
+      <section id="homeView" class="view active">
+        <div class="hero-window window">
+          <div class="window-bar"><span class="traffic"><i></i><i></i><i></i></span><span>campus://today</span><span class="status-pill">Live</span></div>
+          <div class="hero-content">
+            <div><p class="eyebrow">Good to see you</p><h2>Welcome back, <span id="userName">student</span>.</h2><p>Your classes, campus updates, and community tools—one calm workspace.</p></div>
+            <div class="command-search"><label for="globalSearch">Quick search</label><div><input id="globalSearch" type="search" placeholder="Search academic resources…"><button id="globalSearchButton">Search</button></div></div>
+          </div>
         </div>
-
-        <div class="nav-links">
-            <a href="index.html" class="active">Home</a>
-            <a href="resources.html">Resources</a>
-            <a href="lost-found.html">Lost & Found</a>
-            <a href="#">Events</a>
+        <div class="metric-grid" id="metrics" aria-live="polite"></div>
+        <div class="dashboard-grid">
+          <section class="window"><div class="window-heading"><div><p class="eyebrow">Next up</p><h2>Campus events</h2></div><button class="text-button" data-open="events">View all →</button></div><div id="homeEvents" class="content-list"><div class="skeleton"></div><div class="skeleton"></div></div></section>
+          <section class="window"><div class="window-heading"><div><p class="eyebrow">Fresh uploads</p><h2>Resources</h2></div><button class="text-button" data-open="resources">Browse →</button></div><div id="homeResources" class="content-list"><div class="skeleton"></div><div class="skeleton"></div></div></section>
+          <section class="window span-two"><div class="window-heading"><div><p class="eyebrow">Community board</p><h2>Lost &amp; Found</h2></div><button class="text-button" data-open="lost-found">Open board →</button></div><div id="homeLostFound" class="card-row"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div></section>
         </div>
-
-        <div class="nav-right">
-
-            <a href="profile.html" class="profile-btn">
-                👤 Profile
-            </a>
-
-            <button id="logoutBtn">
-                Logout
-            </button>
-
-        </div>
-
-    </nav>
-
-
-    <main>
-
-        <!-- WELCOME -->
-
-        <section class="welcome">
-
-            <div>
-
-                <p class="small-heading">
-                    COLLEGEBUDDY
-                </p>
-
-                <h1>
-                    Welcome back, <span id="userName">Student</span> 👋
-                </h1>
-
-                <p>
-                    Everything you need for your college life,
-                    all in one place.
-                </p>
-
-            </div>
-
-        </section>
-
-
-        <!-- SEARCH -->
-
-        <section class="search-section">
-
-            <input
-                type="text"
-                id="searchInput"
-                placeholder="Search resources, events, lost items..."
-            >
-
-            <button id="searchBtn">
-                🔍 Search
-            </button>
-
-        </section>
-
-
-        <!-- QUICK ACCESS -->
-
-        <section>
-
-            <div class="section-header">
-
-                <h2>Quick Access</h2>
-
-            </div>
-
-
-            <div class="quick-grid">
-
-                <a href="resources.html" class="quick-card">
-
-                    <div class="icon">📚</div>
-
-                    <h3>Resources</h3>
-
-                    <p>
-                        Notes, PDFs and study material
-                    </p>
-
-                </a>
-
-
-                <a href="lost-found.html" class="quick-card">
-
-                    <div class="icon">🔎</div>
-
-                    <h3>Lost & Found</h3>
-
-                    <p>
-                        Find or report lost belongings
-                    </p>
-
-                </a>
-
-<!-- 
-                <a href="#" class="quick-card">
-
-                    <div class="icon">💬</div>
-
-                    <h3>Chat</h3>
-
-                    <p>
-                        Connect with your classmates
-                    </p>
-
-                </a> -->
-
-
-                <a href="events.html" class="quick-card">
-
-                    <div class="icon">📅</div>
-
-                    <h3>Events</h3>
-
-                    <p>
-                        Hackathons, workshops and events
-                    </p>
-
-                </a>
-
-            </div>
-
-        </section>
-
-
-        <!-- UPCOMING EVENTS -->
-
-        <!-- UPCOMING EVENTS -->
-
-<section class="home-events">
-
-    <div class="section-heading">
-
-        <div>
-            <p class="section-label">
-                COLLEGEBUDDY
-            </p>
-
-            <h2>
-                Upcoming Events & Hackathons
-            </h2>
-
-            <p>
-                Don't miss upcoming competitions,
-                hackathons and workshops.
-            </p>
-        </div>
-
-        <a href="events.html" class="view-all">
-            View All →
-        </a>
-
-    </div>
-
-
-    <div
-        id="homeEventsContainer"
-        class="home-events-grid"
-    >
-
-        <div class="home-loading">
-            Loading events...
-        </div>
-
-    </div>
-
-</section>    
-
-        <!-- RECENT RESOURCES -->
-
-        <section class="section">
-
-            <div class="section-header">
-
-                <h2>Recent Resources</h2>
-
-                <a href="resources.html">
-                    View all →
-                </a>
-
-            </div>
-
-
-            <div id="resourcesContainer" class="resource-list">
-
-                <div class="loading">
-                    Loading resources...
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- LOST AND FOUND -->
-
-        <section class="section">
-
-            <div class="section-header">
-
-                <h2>Recent Lost & Found</h2>
-
-                <a href="lost-found.html">
-                    View all →
-                </a>
-
-            </div>
-
-
-            <div id="lostFoundContainer" class="lost-grid">
-
-                <div class="loading">
-                    Loading reports...
-                </div>
-
-            </div>
-
-        </section>
-
-
+      </section>
+
+      <section id="coursesView" class="view"><div class="view-toolbar"><div><p class="eyebrow">Academic catalog</p><h2>Your course map</h2></div><input id="courseSearch" type="search" placeholder="Search course or code"></div><div id="coursesGrid" class="tile-grid"></div></section>
+      <section id="resourcesView" class="view"><div class="view-toolbar"><div><p class="eyebrow">Knowledge library</p><h2>Academic resources</h2></div><div class="toolbar-actions"><input id="resourceSearch" type="search" placeholder="Search resources"><a class="primary-button" href="add-resources.html">Upload</a></div></div><div id="resourceFilters" class="filter-row"><button class="chip active" data-type="">All</button><button class="chip" data-type="notes">Notes</button><button class="chip" data-type="previous_year_paper">Past papers</button><button class="chip" data-type="assignment">Assignments</button><button class="chip" data-type="lab_material">Labs</button></div><div id="resourcesGrid" class="tile-grid"></div></section>
+      <section id="eventsView" class="view"><div class="view-toolbar"><div><p class="eyebrow">Campus pulse</p><h2>Events</h2></div><a class="secondary-button" href="events.html">Detailed view</a></div><div id="eventsGrid" class="tile-grid"></div></section>
+      <section id="lost-foundView" class="view"><div class="view-toolbar"><div><p class="eyebrow">Community board</p><h2>Lost &amp; Found</h2></div><a class="primary-button" href="add-lost-found.html">Report item</a></div><div id="lostFoundGrid" class="tile-grid"></div></section>
+      <section id="profileView" class="view"><div id="profilePanel" class="window profile-panel"></div></section>
+      <section id="settingsView" class="view"><div class="window settings-panel"><p class="eyebrow">Local preferences</p><h2>Settings</h2><label for="apiUrlSetting">API base URL</label><div class="setting-row"><input id="apiUrlSetting" type="url" placeholder="http://localhost:3000"><button id="saveSettings" class="primary-button">Save</button></div><p class="muted">Leave blank to use the current host on port 3000. Reload after changing this setting.</p></div></section>
+      <section id="adminView" class="view"><div class="view-toolbar"><div><p class="eyebrow">Restricted workspace</p><h2>Admin center</h2></div><div class="toolbar-actions"><a class="secondary-button" href="admin/html/events.html">Manage events</a><a class="secondary-button" href="admin/html/users.html">Manage users</a></div></div><div id="adminGrid" class="dashboard-grid"></div></section>
     </main>
-
-
-    <footer>
-
-        <p>
-            © 2026 CollegeBuddy
-        </p>
-
-    </footer>
-
-
-    <script src="./js/home.js"></script>
-
+  </div>
+  <div id="mobileBackdrop" class="backdrop hidden"></div>
+  <script src="./js/api-client.js"></script>
+  <script src="./js/campus-os.js"></script>
 </body>
-
 </html>

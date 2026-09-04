@@ -22,6 +22,10 @@ const eventSchema = new mongoose.Schema({
         type: Date
     },
 
+    endDate: {
+        type: Date
+    },
+
     location: {
         type: String
     },
@@ -45,10 +49,18 @@ const eventSchema = new mongoose.Schema({
         ],
         default: "other"
     }
+    ,
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
 
 }, {
     timestamps: true
 }
 )
+
+eventSchema.index({ eventDate: 1, type: 1 });
+eventSchema.index({ title: 'text', description: 'text', organizer: 'text', location: 'text' });
 
 module.exports = mongoose.model('Event', eventSchema)

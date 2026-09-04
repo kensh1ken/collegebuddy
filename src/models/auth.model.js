@@ -17,7 +17,8 @@ const userSchema = new mongoose.Schema({
   password:{
     type:String,
     required:true,
-    minlength:6
+    minlength:8,
+    select:false
   },
   course:{
     type:String,
@@ -45,8 +46,10 @@ const userSchema = new mongoose.Schema({
     default:false
   },
   rollNumber:{
-    type:Number,
-    unique:true
+    type:String,
+    trim:true,
+    unique:true,
+    sparse:true
   }
 
 },
@@ -55,20 +58,21 @@ const userSchema = new mongoose.Schema({
 
 });
 userSchema.pre('save' , async function() {
+  if (!this.isModified('password')) return;
   const salt = await bcrypt.genSalt();
   this.password = await bcrypt.hash(this.password , salt);
 })
 userSchema.statics.login = async function(email , password) {
-  const user = await this.findOne({email});
-  if(user) {
-    const auth = await bcrypt.compare(password , user.password)
-    if(auth) {
-      return user
-    } else {
-      throw Error('Incorrect Password');
-    }
-  } else{
-    throw Error('Incorrect Email')
-  }
+  const user = await this.findOne({email}).select('+password');
+  if (!user) return null;
+  const authenticated = await bcrypt.compare(password, user.password);
+  return authenticated ? user : null;
 }
+userSchema.set('toJSON', {
+  transform: (_document, returned) => {
+    delete returned.password;
+    delete returned.__v;
+    return returned;
+  }
+});
 module.exports = new mongoose.model('User' , userSchema)

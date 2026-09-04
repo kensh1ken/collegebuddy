@@ -1,52 +1,51 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/auth.model");
-const maxTime = 3 * 24 * 60 * 60;
-const createToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: maxTime,
-  });
-};
+const { env } = require("../config/env");
+const AppError = require("../utils/AppError");
+const { sendSuccess } = require("../utils/response");
+const { privateUser } = require("../utils/serializers");
+
+const createToken = (id) => jwt.sign({ id: String(id) }, env.jwtSecret, { expiresIn: env.jwtExpiresIn });
+
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: env.nodeEnv === "production",
+  sameSite: env.nodeEnv === "production" ? "none" : "lax",
+  maxAge: 3 * 24 * 60 * 60 * 1000,
+  path: "/",
+});
+
 module.exports.signup_post = async (req, res) => {
   const { name, email, password } = req.body;
-  if(!email.endsWith("iiitg.ac.in")) {
-    return res.status(400).json({"message":"Please use your college email"});
-  }
-    const isExist = await User.findOne({email})
-  if (isExist) {
-    return res.status(400).json({ message: "User already exists" });
-  }
-  try {
-    const user = await User.create({ name, email, password });
-    const token = createToken(user._id);
-    res.cookie("jwt", token, { httpOnly: true, maxAge: maxTime * 1000 });
-    res.status(201).json({user: user._id,token, message: "User created successfully"});
-  } catch (err) {
-    console.log(err);
-  }
+  const existing = await User.exists({ email });
+  if (existing) throw new AppError(409, "ACCOUNT_EXISTS", "An account with this email already exists");
+
+  const user = await User.create({ name, email, password });
+  const token = createToken(user._id);
+  res.cookie("jwt", token, cookieOptions());
+  return sendSuccess(res, {
+    status: 201,
+    message: "Account created successfully",
+    data: { user: privateUser(user), token, profileCompleted: user.profileCompleted },
+  });
 };
-module.exports.login_post = async (req , res)=> {
+
+module.exports.login_post = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.login(email, password);
-  if(!user) {
-    return res.status(400).json({message: "User not found"});
-  }
-  if(user.isBlocked) {
-    return res.status(403).json({
-      message:"your account has been blocked , please contact admin"
-    })
-  }
-  try{
-    const token =  createToken(user._id);
-    res.cookie("jwt", token, { httpOnly: true, maxAge: maxTime * 1000 });
-    res.status(200).json({
-      user: user._id,
-      token,
-      profileCompleted: user.profileCompleted,
-      message: "User logged in successfully"
-    });
-  }catch(err) {
-    console.log(err);
-  }
+  if (!user) throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password");
+  if (user.isBlocked) throw new AppError(403, "ACCOUNT_BLOCKED", "This account has been blocked");
 
-}
+  const token = createToken(user._id);
+  res.cookie("jwt", token, cookieOptions());
+  return sendSuccess(res, {
+    message: "Login successful",
+    data: { user: privateUser(user), token, profileCompleted: user.profileCompleted },
+  });
+};
 
+module.exports.logout_post = async (_req, res) => {
+  const { maxAge, ...clearOptions } = cookieOptions();
+  res.clearCookie("jwt", clearOptions);
+  return sendSuccess(res, { message: "Logged out successfully" });
+};

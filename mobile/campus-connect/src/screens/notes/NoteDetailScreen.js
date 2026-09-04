@@ -1,18 +1,33 @@
-import React from "react";
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Button from "../../components/Button";
 import { colors, radius, spacing } from "../../theme/colors";
+import { notesApi } from "../../api/notes";
 
 export default function NoteDetailScreen({ route }) {
   const { resource } = route.params;
-  const link = resource.resourceType === "file" ? resource.fileUrl : resource.externalLink;
+  const [opening, setOpening] = useState(false);
+  const isLink = resource.deliveryType === "link" || resource.resourceType === "link" || resource.resourceType === "external_link";
+
+  const openResource = async () => {
+    setOpening(true);
+    try {
+      const download = await notesApi.getDownload(resource._id);
+      if (!download?.url) throw new Error("No download is available");
+      await Linking.openURL(download.url);
+    } catch (error) {
+      Alert.alert("Unable to open resource", error.message);
+    } finally {
+      setOpening(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: spacing.lg }}>
       <View style={styles.iconCircle}>
         <Ionicons
-          name={resource.resourceType === "file" ? "document-outline" : "link-outline"}
+          name={isLink ? "link-outline" : "document-outline"}
           size={28}
           color={colors.primary}
         />
@@ -32,13 +47,12 @@ export default function NoteDetailScreen({ route }) {
         </View>
       ) : null}
 
-      {link ? (
-        <Button
-          title={resource.resourceType === "file" ? "Open file" : "Open link"}
-          onPress={() => Linking.openURL(link)}
-          style={{ marginTop: spacing.lg }}
-        />
-      ) : null}
+      <Button
+        title={isLink ? "Open link" : "Get secure download"}
+        onPress={openResource}
+        loading={opening}
+        style={{ marginTop: spacing.lg }}
+      />
     </ScrollView>
   );
 }
